@@ -215,6 +215,14 @@ Resources:
       TableName: !Sub ${AWS::StackName}-usersTable
     Metadata:
       StackeryName: Users
+  localBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub ${AWS::StackName}-localbuck-${AWS::AccountId}
+      WebsiteConfiguration:
+        IndexDocument: index.html
+    Metadata:
+      StackeryName: localBucket
 Parameters:
   StackeryStackTagName:
     Type: String
