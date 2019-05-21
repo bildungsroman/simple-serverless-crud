@@ -215,14 +215,14 @@ Resources:
       TableName: !Sub ${AWS::StackName}-usersTable
     Metadata:
       StackeryName: Users
-  serveFrontend:
+  serveFrontEnd:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: !Sub ${AWS::StackName}-serveFrontend
+      FunctionName: !Sub ${AWS::StackName}-serveFrontEnd
       Description: !Sub
         - Stack ${StackTagName} Environment ${EnvironmentTagName} Function ${ResourceName}
-        - ResourceName: serveFrontend
-      CodeUri: src/serveFrontend
+        - ResourceName: serveFrontEnd
+      CodeUri: src/serveFrontEnd
       Handler: index.handler
       Runtime: nodejs8.10
       MemorySize: 3008
@@ -231,21 +231,21 @@ Resources:
       Policies:
         - AWSXrayWriteOnlyAccess
         - S3CrudPolicy:
-            BucketName: !Ref Frontend
+            BucketName: !Ref FrontEnd
       Environment:
         Variables:
-          BUCKET_NAME: !Ref Frontend
-          BUCKET_ARN: !GetAtt Frontend.Arn
+          BUCKET_NAME: !Ref FrontEnd
+          BUCKET_ARN: !GetAtt FrontEnd.Arn
     Metadata:
-      StackeryName: serveFrontend
-  Frontend:
+      StackeryName: serveFrontEnd
+  FrontEnd:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub ${AWS::StackName}-frontend-${AWS::AccountId}
       WebsiteConfiguration:
         IndexDocument: index.html
     Metadata:
-      StackeryName: Frontend
+      StackeryName: FrontEnd
 Parameters:
   StackeryStackTagName:
     Type: String
