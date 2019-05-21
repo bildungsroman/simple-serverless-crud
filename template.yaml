@@ -215,37 +215,6 @@ Resources:
       TableName: !Sub ${AWS::StackName}-usersTable
     Metadata:
       StackeryName: Users
-  serveFrontEnd:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: !Sub ${AWS::StackName}-serveFrontEnd
-      Description: !Sub
-        - Stack ${StackTagName} Environment ${EnvironmentTagName} Function ${ResourceName}
-        - ResourceName: serveFrontEnd
-      CodeUri: src/serveFrontEnd
-      Handler: index.handler
-      Runtime: nodejs8.10
-      MemorySize: 3008
-      Timeout: 30
-      Tracing: Active
-      Policies:
-        - AWSXrayWriteOnlyAccess
-        - S3CrudPolicy:
-            BucketName: !Ref FrontEnd
-      Environment:
-        Variables:
-          BUCKET_NAME: !Ref FrontEnd
-          BUCKET_ARN: !GetAtt FrontEnd.Arn
-    Metadata:
-      StackeryName: serveFrontEnd
-  FrontEnd:
-    Type: AWS::S3::Bucket
-    Properties:
-      BucketName: !Sub ${AWS::StackName}-frontend-${AWS::AccountId}
-      WebsiteConfiguration:
-        IndexDocument: index.html
-    Metadata:
-      StackeryName: FrontEnd
 Parameters:
   StackeryStackTagName:
     Type: String
@@ -256,9 +225,3 @@ Parameters:
   StackeryEnvironmentAPIGatewayStageName:
     Type: String
     Description: Environment name used for API Gateway Stage names (injected by Stackery at deployment time)
-  StackTagName:
-    Type: String
-    Description: Stack Name (injected by Stackery at deployment time)
-  EnvironmentTagName:
-    Type: String
-    Description: Environment Name (injected by Stackery at deployment time)
