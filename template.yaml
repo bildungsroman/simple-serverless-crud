@@ -63,12 +63,6 @@ Resources:
       Tracing: Active
       Policies:
         - AWSXrayWriteOnlyAccess
-        - DynamoDBCrudPolicy:
-            TableName: !Ref usersTable
-      Environment:
-        Variables:
-          TABLE_NAME: !Ref usersTable
-          TABLE_ARN: !GetAtt usersTable.Arn
       Events:
         apiGETusersid:
           Type: Api
@@ -76,6 +70,12 @@ Resources:
             Path: /users/{id}
             Method: GET
             RestApiId: !Ref api
+      Environment:
+        Variables:
+          DB_ID: !Ref UsersDB
+          DB_ADDRESS: !GetAtt UsersDB.Endpoint.Address
+          DB_PORT: !GetAtt UsersDB.Endpoint.Port
+          DB_ARN: !Sub arn:aws:rds:${AWS::Region}:${AWS::AccountId}:cluster:${UsersDB}
     Metadata:
       StackeryName: getUser
   updateUser:
@@ -93,12 +93,6 @@ Resources:
       Tracing: Active
       Policies:
         - AWSXrayWriteOnlyAccess
-        - DynamoDBCrudPolicy:
-            TableName: !Ref usersTable
-      Environment:
-        Variables:
-          TABLE_NAME: !Ref usersTable
-          TABLE_ARN: !GetAtt usersTable.Arn
       Events:
         apiPUTusersid:
           Type: Api
@@ -106,6 +100,12 @@ Resources:
             Path: /users/{id}
             Method: PUT
             RestApiId: !Ref api
+      Environment:
+        Variables:
+          DB_ID: !Ref UsersDB
+          DB_ADDRESS: !GetAtt UsersDB.Endpoint.Address
+          DB_PORT: !GetAtt UsersDB.Endpoint.Port
+          DB_ARN: !Sub arn:aws:rds:${AWS::Region}:${AWS::AccountId}:cluster:${UsersDB}
     Metadata:
       StackeryName: updateUser
   createUser:
@@ -123,12 +123,6 @@ Resources:
       Tracing: Active
       Policies:
         - AWSXrayWriteOnlyAccess
-        - DynamoDBCrudPolicy:
-            TableName: !Ref usersTable
-      Environment:
-        Variables:
-          TABLE_NAME: !Ref usersTable
-          TABLE_ARN: !GetAtt usersTable.Arn
       Events:
         apiPOSTusers:
           Type: Api
@@ -136,6 +130,12 @@ Resources:
             Path: /users
             Method: POST
             RestApiId: !Ref api
+      Environment:
+        Variables:
+          DB_ID: !Ref UsersDB
+          DB_ADDRESS: !GetAtt UsersDB.Endpoint.Address
+          DB_PORT: !GetAtt UsersDB.Endpoint.Port
+          DB_ARN: !Sub arn:aws:rds:${AWS::Region}:${AWS::AccountId}:cluster:${UsersDB}
     Metadata:
       StackeryName: createUser
   deleteUser:
@@ -153,12 +153,6 @@ Resources:
       Tracing: Active
       Policies:
         - AWSXrayWriteOnlyAccess
-        - DynamoDBCrudPolicy:
-            TableName: !Ref usersTable
-      Environment:
-        Variables:
-          TABLE_NAME: !Ref usersTable
-          TABLE_ARN: !GetAtt usersTable.Arn
       Events:
         apiDELETEusersid:
           Type: Api
@@ -166,6 +160,12 @@ Resources:
             Path: /users/{id}
             Method: DELETE
             RestApiId: !Ref api
+      Environment:
+        Variables:
+          DB_ID: !Ref UsersDB
+          DB_ADDRESS: !GetAtt UsersDB.Endpoint.Address
+          DB_PORT: !GetAtt UsersDB.Endpoint.Port
+          DB_ARN: !Sub arn:aws:rds:${AWS::Region}:${AWS::AccountId}:cluster:${UsersDB}
     Metadata:
       StackeryName: deleteUser
   listUsers:
@@ -183,16 +183,12 @@ Resources:
       Tracing: Active
       Policies:
         - AWSXrayWriteOnlyAccess
-        - DynamoDBCrudPolicy:
-            TableName: !Ref usersTable
       Environment:
         Variables:
-          TABLE_NAME: !Ref usersTable
-          TABLE_ARN: !GetAtt usersTable.Arn
-          DB_ID: !Ref Database
-          DB_ADDRESS: !GetAtt Database.Endpoint.Address
-          DB_PORT: !GetAtt Database.Endpoint.Port
-          DB_ARN: !Sub arn:aws:rds:${AWS::Region}:${AWS::AccountId}:cluster:${Database}
+          DB_ID: !Ref UsersDB
+          DB_ADDRESS: !GetAtt UsersDB.Endpoint.Address
+          DB_PORT: !GetAtt UsersDB.Endpoint.Port
+          DB_ARN: !Sub arn:aws:rds:${AWS::Region}:${AWS::AccountId}:cluster:${UsersDB}
       Events:
         apiGETusers:
           Type: Api
@@ -202,68 +198,6 @@ Resources:
             RestApiId: !Ref api
     Metadata:
       StackeryName: listUsers
-  usersTable:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      AttributeDefinitions:
-        - AttributeName: id
-          AttributeType: S
-      KeySchema:
-        - AttributeName: id
-          KeyType: HASH
-      ProvisionedThroughput:
-        ReadCapacityUnits: 5
-        WriteCapacityUnits: 5
-      StreamSpecification:
-        StreamViewType: NEW_AND_OLD_IMAGES
-      TableName: !Sub ${AWS::StackName}-usersTable
-    Metadata:
-      StackeryName: Users
-  Database:
-    Type: AWS::RDS::DBCluster
-    Properties:
-      BackupRetentionPeriod: 1
-      DBSubnetGroupName: !Ref DatabaseSubnetGroup
-      Engine: aurora
-      EngineMode: serverless
-      MasterUsername: root
-      MasterUserPassword: ''
-      ScalingConfiguration:
-        AutoPause: false
-        MinCapacity: 2
-        MaxCapacity: 256
-      StorageEncrypted: true
-      VpcSecurityGroupIds:
-        - !Ref DatabaseSecurityGroup
-  DatabaseSubnetGroup:
-    Type: AWS::RDS::DBSubnetGroup
-    Properties:
-      DBSubnetGroupDescription: !Sub
-        - Stack ${StackTagName} Environment ${EnvironmentTagName} Database ${ResourceName} VPC Subnets
-        - ResourceName: Database
-      SubnetIds:
-        - !Ref VirtualNetworkPrivateSubnet1
-        - !Ref VirtualNetworkPrivateSubnet2
-      Tags:
-        - Key: Name
-          Value: !Sub
-            - Stack ${StackTagName} Environment ${EnvironmentTagName} Database ${ResourceName} VPC Subnets
-            - ResourceName: Database
-  DatabaseSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Database Security Group
-      SecurityGroupIngress:
-        CidrIp: 0.0.0.0/0
-        FromPort: 3306
-        IpProtocol: tcp
-        ToPort: 3306
-      Tags:
-        - Key: Name
-          Value: !Sub
-            - Stack ${StackTagName} Environment ${EnvironmentTagName} Database ${ResourceName} VPC Security Group
-            - ResourceName: Database
-      VpcId: !Ref VirtualNetwork
   VirtualNetwork:
     Type: AWS::EC2::VPC
     Properties:
@@ -483,6 +417,53 @@ Resources:
     Properties:
       RouteTableId: !Ref VirtualNetworkPublicSubnetsRouteTable
       SubnetId: !Ref VirtualNetworkPublicSubnet2
+  UsersDB:
+    Type: AWS::RDS::DBCluster
+    Properties:
+      BackupRetentionPeriod: 1
+      DBSubnetGroupName: !Ref UsersDBSubnetGroup
+      Engine: aurora
+      EngineMode: serverless
+      MasterUsername: root
+      MasterUserPassword: password
+      ScalingConfiguration:
+        AutoPause: false
+        MinCapacity: 2
+        MaxCapacity: 256
+      StorageEncrypted: true
+      VpcSecurityGroupIds:
+        - !Ref UsersDBSecurityGroup
+    Metadata:
+      StackeryName: UsersDB
+  UsersDBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: !Sub
+        - Stack ${StackTagName} Environment ${EnvironmentTagName} Database ${ResourceName} VPC Subnets
+        - ResourceName: UsersDB
+      SubnetIds:
+        - !Ref VirtualNetworkPrivateSubnet1
+        - !Ref VirtualNetworkPrivateSubnet2
+      Tags:
+        - Key: Name
+          Value: !Sub
+            - Stack ${StackTagName} Environment ${EnvironmentTagName} Database ${ResourceName} VPC Subnets
+            - ResourceName: UsersDB
+  UsersDBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Database Security Group
+      SecurityGroupIngress:
+        CidrIp: 0.0.0.0/0
+        FromPort: 3306
+        IpProtocol: tcp
+        ToPort: 3306
+      Tags:
+        - Key: Name
+          Value: !Sub
+            - Stack ${StackTagName} Environment ${EnvironmentTagName} Database ${ResourceName} VPC Security Group
+            - ResourceName: UsersDB
+      VpcId: !Ref VirtualNetwork
 Parameters:
   StackeryStackTagName:
     Type: String
